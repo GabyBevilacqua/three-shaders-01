@@ -2,18 +2,28 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import { Suspense } from 'react';
+import Globe from "./Globe";
+
 
 export default function Scene() {
   return (
-    <Canvas camera={{ position: [2, 2, 2], fov: 60 }}>
-      <OrbitControls />
-      <ambientLight intensity={0.5} />
+    <Canvas 
+    // Usa dpr para asegurar la nitidez de la textura en pantallas de alta densidad 
+    // dpr={[3, 4]} no funciona bien 
+    camera={{ position: [2, 2, 2], 
+    fov: 60 }}
+    gl={{ antialias: true }}
+    >
+       <OrbitControls /> {/*autoRotate*/}
+      <ambientLight intensity={2} />
       <directionalLight position={[3, 3, 3]} intensity={1} />
 
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="orange" />
-      </mesh>
+            {/* El componente Globe debe estar envuelto en Suspense */}
+      <Suspense fallback={null /* o un componente de carga */}>
+        <Globe />
+      </Suspense>
+      
     </Canvas>
   );
 };

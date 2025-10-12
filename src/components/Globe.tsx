@@ -9,9 +9,12 @@ import {
   Mesh,
   DoubleSide,
   BackSide,
+  Group
 } from "three";
+import CountryBoxes from "./CountryBoxes";
 
 export default function Globe() {
+  const groupRef = useRef<Group>(null); // 👈 nuevo grupo que contendrá todo
   const globeRef = useRef<Mesh>(null);
   const atmosphereRef = useRef<Mesh>(null);
   const [texture] = useLoader(TextureLoader, ["/img/globe.jpg"]);
@@ -140,16 +143,22 @@ export default function Globe() {
   /* ----------------------------------------------------------------
      🔁 Animación del planeta
      ---------------------------------------------------------------- */
+  // useFrame(() => {
+  //   if (globeRef.current && atmosphereRef.current) {
+  //     // Rotamos ambos objetos lentamente sobre el eje Y
+  //     globeRef.current.rotation.y += 0.001;
+  //     atmosphereRef.current.rotation.y += 0.001;
+  //   }
+  // });
+
   useFrame(() => {
-    if (globeRef.current && atmosphereRef.current) {
-      // Rotamos ambos objetos lentamente sobre el eje Y
-      globeRef.current.rotation.y += 0.001;
-      atmosphereRef.current.rotation.y += 0.001;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.001; // 👈 rotamos TODO el grupo
     }
   });
 
   return (
-    <>
+    <group ref={groupRef}>
       {/* 🌍 Globo con textura + leve atmósfera en superficie */}
       <mesh 
       ref={globeRef} 
@@ -162,7 +171,10 @@ export default function Globe() {
       <mesh ref={atmosphereRef} scale={1.1} material={atmosphereMaterial}>
         <sphereGeometry args={[1, 64, 64]} />
       </mesh>
-    </>
+
+      {/* 📊 Cajas de población */}
+      <CountryBoxes radius={1} />
+    </group>
   );
 }
 

@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Suspense } from 'react';
 import Globe from "./Globe";
+import StarGeometry from "./StarGeometry";
 
 
 export default function Scene() {
@@ -23,6 +24,8 @@ export default function Scene() {
       <Suspense fallback={null /* o un componente de carga */}>
         <Globe />
       </Suspense>
+      
+      <StarGeometry />
       
     </Canvas>
   );

@@ -11,7 +11,12 @@ type Country = {
   // ...otros campos si los necesitas
 };
 
-export default function CountryBoxes({ radius = 1 }: { radius?: number }) {
+export default function CountryBoxes({ 
+  radius = 1, calibration, 
+}: { 
+  radius?: number; 
+  calibration?: { lonOffset?: number; latOffset?: number; invertLon?: boolean };
+ }) {
   // Filtramos países sin latlng
   const list: Country[] = (countries as any[]).filter(
     (c) => Array.isArray(c.latlng) && c.latlng.length === 2 && c.latlng[0] !== 0 && c.latlng[1] !== 0
@@ -27,6 +32,7 @@ export default function CountryBoxes({ radius = 1 }: { radius?: number }) {
             country={c.name}
             population={c.population}
             radius={radius}
+            calibration={calibration} 
             // color puedes variar por región si quieres
           />
         </Fragment>

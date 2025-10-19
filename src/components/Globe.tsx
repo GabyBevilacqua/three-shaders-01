@@ -177,7 +177,7 @@ export default function Globe({ calibration }: { calibration?: { lonOffset: numb
         </mesh>
 
         {/* 📊 Cajas de población */}
-        <CountryBoxes radius={1} />
+        <CountryBoxes radius={1}  calibration={calibration} />
 
         {/* 📍 Marcador de depuración en CDMX */}
         <DebugMarker

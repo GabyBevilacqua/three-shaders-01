@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Mesh } from "three";
 import { useFrame } from "@react-three/fiber";
 import gsap from "gsap";
+import { latLngToVector3 } from "@/utils/coords";
 
 type Props = {
   lat: number;
@@ -22,7 +23,8 @@ export default function CountryBox({
   population,
   radius = 1,
   color = "#3BF7FF",
-}: Props) {
+  calibration,
+}: Props & { calibration?: { lonOffset?: number; latOffset?: number; invertLon?: boolean } }) {
   const meshRef = useRef<Mesh | null>(null);
 
   // convertir lat/lng a radianes
@@ -57,14 +59,20 @@ const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // ajustar la geometría: la caja la creamos centrada, así que desplazamos su posición
-    // moveremos la posición hacia fuera para que el "pie" de la caja quede pegado al globo
-    const dir = mesh.position.clone().normalize(); // dirección desde el centro
-    // posicion original en la superficie
-    mesh.position.set(x, y, z);
-    // sacamos el centro hacia fuera por (depth/2) sobre el radio
-    const extra = 0.05; // proporción
-    mesh.position.add(dir.multiplyScalar(extra));
+  // calcula la posición exacta en la superficie usando la misma lógica que DebugMarker
+  // añadimos un pequeño offset (radius + 0.02) para que la caja no intersecte la superficie
+  const surfacePos = latLngToVector3(lat, lng, radius + 0.02, calibration ?? {});
+
+  // colocamos el mesh en esa posición
+  mesh.position.copy(surfacePos);
+
+  // normal desde el centro hacia el punto en la superficie
+  const dir = surfacePos.clone().normalize();
+
+  // sacamos la caja hacia fuera para que su base quede pegada:
+  // usa depth/2 o un extra fijo según prefieras
+  const extra = depth / 2; // o const extra = 0.05;
+  mesh.position.add(dir.multiplyScalar(extra));
 
     // apuntar hacia el centro
     mesh.lookAt(0, 0, 0);
@@ -90,7 +98,8 @@ const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
   return (
     <mesh ref={meshRef}>
       {/* Tamaños X,Y reducidos para que las cajas sean más discretas; Z = depth */}
-      <boxGeometry args={[Math.max(0.02, 0.03 * baseScale), Math.max(0.02, 0.03 * baseScale), depth * 0.8]} />
+      <boxGeometry 
+      args={[Math.max(0.02, 0.03 * baseScale), Math.max(0.02, 0.03 * baseScale), depth * 0.8]} />
       <meshBasicMaterial color={color} opacity={0.4} transparent />
       {/* Añade propiedades para debugging */}
       {/* @ts-ignore */}

@@ -11,7 +11,11 @@ import CountryBoxes from "./CountryBoxes";
 
 export default function Scene() {
   // Inicializamos lonOffset a 199 grados (convertido a radianes)
-  const [calibration, setCalibration] = useState({ lonOffset: (199 * Math.PI) / 180, latOffset: 0, invertLon: false });
+  const [calibration, setCalibration] = useState({
+    lonOffset: (199 * Math.PI) / -100,
+    latOffset: 0,
+    invertLon: true
+  });
 
   return (
     <>

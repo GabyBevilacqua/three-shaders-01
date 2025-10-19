@@ -2,15 +2,21 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import Globe from "./Globe";
+import CalibrationControls from "./CalibrationControls";
 import StarGeometry from "./StarGeometry";
 import CountryBoxes from "./CountryBoxes";
 
 
 export default function Scene() {
+  // Inicializamos lonOffset a 199 grados (convertido a radianes)
+  const [calibration, setCalibration] = useState({ lonOffset: (199 * Math.PI) / 180, latOffset: 0, invertLon: false });
+
   return (
-    <Canvas
+    <>
+      <CalibrationControls onChange={setCalibration} />
+      <Canvas
       // Usa dpr para asegurar la nitidez de la textura en pantallas de alta densidad 
       // dpr={[3, 4]} no funciona bien 
       camera={{
@@ -25,7 +31,7 @@ export default function Scene() {
 
       {/* El componente Globe debe estar envuelto en Suspense */}
       <Suspense fallback={null /* o un componente de carga */}>
-        <Globe />
+        <Globe calibration={calibration} />
          {/* Ponemos las cajas con radius=1 si tu globo es radius 1 */}
         {/* <CountryBoxes radius={1} /> */}
       </Suspense>
@@ -33,6 +39,7 @@ export default function Scene() {
       <StarGeometry />
 
     </Canvas>
+    </>
   );
 };
 

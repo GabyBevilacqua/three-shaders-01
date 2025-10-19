@@ -12,6 +12,7 @@ type Props = {
   population: number;
   radius?: number; // radio del globo (por defecto 1)
   color?: string;
+  calibration?: { lonOffset?: number; latOffset?: number; invertLon?: boolean };
 };
 
 export default function CountryBox({
@@ -28,9 +29,18 @@ export default function CountryBox({
   const latRad = (lat * Math.PI) / 180;
   const lngRad = (lng * Math.PI) / 180;
 
-  // escala basada en población (ajusta la fórmula a tu gusto)
-  const baseScale = Math.max(0.03, Math.min(1.0, population / 1_000_000_000)); // 0.1..1
-  const depth = Math.max(0.03, 0.5 * baseScale); // tamaño en Z
+  // escala basada en población usando logaritmo para cubrir rangos grandes
+  // Esto hace que diferencias grandes en población se traduzcan en diferencias visibles
+  const popLog = Math.log10(Math.max(1, population));
+  const minLog = 4; // 10^4 = 10k
+  const maxLog = 10; // 10^10 (to cap very large values)
+  const t = Math.min(1, Math.max(0, (popLog - minLog) / (maxLog - minLog)));
+
+  // baseScale entre 0.03 y 1.0 según población (interpolado por t)
+  const baseScale = 0.03 + t * (1.0 - 0.03);
+
+  // profundidad (altura) de la caja, entre 0.04 y 1.2
+  const depth = 0.04 + t * (1.2 - 0.04);
 
 // CORRECCIÓN DE ORIENTACIÓN: 
 // giramos el eje de referencia 90° en longitud para que coincida con la textura del globo
@@ -79,8 +89,8 @@ const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
 
   return (
     <mesh ref={meshRef}>
-      {/* El tamaño X,Y lo hacemos proporcional (mínimo 0.03), Z será depth */}
-      <boxGeometry args={[Math.max(0.03, 0.05 * baseScale), Math.max(0.03, 0.05 * baseScale), depth * 0.8]} />
+      {/* Tamaños X,Y reducidos para que las cajas sean más discretas; Z = depth */}
+      <boxGeometry args={[Math.max(0.02, 0.03 * baseScale), Math.max(0.02, 0.03 * baseScale), depth * 0.8]} />
       <meshBasicMaterial color={color} opacity={0.4} transparent />
       {/* Añade propiedades para debugging */}
       {/* @ts-ignore */}

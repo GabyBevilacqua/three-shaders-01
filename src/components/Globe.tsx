@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import {
   TextureLoader,
@@ -12,20 +12,22 @@ import {
   Group
 } from "three";
 import CountryBoxes from "./CountryBoxes";
+import DebugMarker from "./DebugMarker";
 
-export default function Globe() {
+export default function Globe({ calibration }: { calibration?: { lonOffset: number; latOffset: number; invertLon: boolean } }) {
   const groupRef = useRef<Group>(null); // 👈 nuevo grupo que contendrá todo
   const globeRef = useRef<Mesh>(null);
   const atmosphereRef = useRef<Mesh>(null);
   const [texture] = useLoader(TextureLoader, ["/img/globe.jpg"]);
+  
 
 
-/* ----------------------------------------------------------------
-     🌍 SHADERS DEL GLOBO PRINCIPAL
-     ----------------------------------------------------------------
-     Estos shaders controlan cómo se dibuja la superficie del planeta.
-     Incluyen el mapa de textura y un sutil efecto azul de atmósfera.
-  */
+  /* ----------------------------------------------------------------
+       🌍 SHADERS DEL GLOBO PRINCIPAL
+       ----------------------------------------------------------------
+       Estos shaders controlan cómo se dibuja la superficie del planeta.
+       Incluyen el mapa de textura y un sutil efecto azul de atmósfera.
+    */
 
   // 🧩 Vertex Shader (posición y normales del globo)
   const globeVertexShader = `
@@ -151,30 +153,43 @@ export default function Globe() {
   //   }
   // });
 
-  useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += 0.001; // 👈 rotamos TODO el grupo
-    }
-  });
+  // useFrame(() => {
+  //   if (groupRef.current) {
+  //     groupRef.current.rotation.y += 0.001; // 👈 rotamos TODO el grupo
+  //   }
+  // });
 
   return (
-    <group ref={groupRef}>
-      {/* 🌍 Globo con textura + leve atmósfera en superficie */}
-      <mesh 
-      ref={globeRef} 
-      material={globeMaterial}
-      >
-        <sphereGeometry args={[1, 64, 64]} />
-      </mesh>
 
-      {/* 💫 Capa exterior de atmósfera */}
-      <mesh ref={atmosphereRef} scale={1.1} material={atmosphereMaterial}>
-        <sphereGeometry args={[1, 64, 64]} />
-      </mesh>
+    <>
+      <group ref={groupRef}>
+        {/* 🌍 Globo con textura + leve atmósfera en superficie */}
+        <mesh
+          ref={globeRef}
+          material={globeMaterial}
+        >
+          <sphereGeometry args={[1, 64, 64]} />
+        </mesh>
 
-      {/* 📊 Cajas de población */}
-      <CountryBoxes radius={1} />
-    </group>
+        {/* 💫 Capa exterior de atmósfera */}
+        <mesh ref={atmosphereRef} scale={1.1} material={atmosphereMaterial}>
+          <sphereGeometry args={[1, 64, 64]} />
+        </mesh>
+
+        {/* 📊 Cajas de población */}
+        <CountryBoxes radius={1} />
+
+        {/* 📍 Marcador de depuración en CDMX */}
+        <DebugMarker
+          lat={19.4326}
+          lng={-99.1332}
+          radius={1}
+          opts={
+            calibration ?? { lonOffset: Math.PI, latOffset: 0, invertLon: false }
+          }
+        />
+      </group>
+    </>
   );
 }
 
@@ -269,6 +284,6 @@ export default function Globe() {
 
 
 
-*/ 
+*/
 
 

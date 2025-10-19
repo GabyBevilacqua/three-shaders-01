@@ -42,7 +42,7 @@ export default function CountryBox({
   const baseScale = 0.03 + t * (1.0 - 0.03);
 
   // profundidad (altura) de la caja, entre 0.04 y 1.2
-  const depth = 0.04 + t * (1.2 - 0.04);
+  const depth = 0.02 + t * (0.4 - 0.02);
 
 // CORRECCIÓN DE ORIENTACIÓN: 
 // giramos el eje de referencia 90° en longitud para que coincida con la textura del globo

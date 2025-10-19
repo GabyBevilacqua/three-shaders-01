@@ -153,11 +153,11 @@ export default function Globe({ calibration }: { calibration?: { lonOffset: numb
   //   }
   // });
 
-  // useFrame(() => {
-  //   if (groupRef.current) {
-  //     groupRef.current.rotation.y += 0.001; // 👈 rotamos TODO el grupo
-  //   }
-  // });
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.001; // 👈 rotamos TODO el grupo
+    }
+  });
 
   return (
 
@@ -185,7 +185,7 @@ export default function Globe({ calibration }: { calibration?: { lonOffset: numb
           lng={-99.1332}
           radius={1}
           opts={
-            calibration ?? { lonOffset: Math.PI, latOffset: 0, invertLon: false }
+            calibration ?? { lonOffset: Math.PI, latOffset: 0, invertLon: true }
           }
         />
       </group>

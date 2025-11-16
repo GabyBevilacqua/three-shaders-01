@@ -24,3 +24,17 @@ body {
   z-index: 10;
 }
 
+.country-tooltip {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(10, 15, 30, 0.9);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.country-tooltip strong {
+  display: block;
+  font-size: 0.8rem;
+}

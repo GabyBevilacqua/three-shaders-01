@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Mesh } from "three";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Mesh, Vector3 } from "three";
 import { useFrame } from "@react-three/fiber";
 import gsap from "gsap";
 import { latLngToVector3 } from "@/utils/coords";
+
+export type CountryHoverInfo = {
+  country: string;
+  population: number;
+  position: [number, number, number];
+};
 
 type Props = {
   lat: number;
@@ -14,6 +20,8 @@ type Props = {
   radius?: number; // radio del globo (por defecto 1)
   color?: string;
   calibration?: { lonOffset?: number; latOffset?: number; invertLon?: boolean };
+  onHoverChange?: (payload: CountryHoverInfo | null) => void;
+  hoverColor?: string;
 };
 
 export default function CountryBox({
@@ -24,8 +32,11 @@ export default function CountryBox({
   radius = 1,
   color = "#3BF7FF",
   calibration,
+  onHoverChange,
+  hoverColor,
 }: Props & { calibration?: { lonOffset?: number; latOffset?: number; invertLon?: boolean } }) {
   const meshRef = useRef<Mesh | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   // convertir lat/lng a radianes
   const latRad = (lat * Math.PI) / 180;
@@ -44,14 +55,14 @@ export default function CountryBox({
   // profundidad (altura) de la caja, entre 0.04 y 1.2
   const depth = 0.02 + t * (0.4 - 0.02);
 
-// CORRECCIÓN DE ORIENTACIÓN: 
-// giramos el eje de referencia 90° en longitud para que coincida con la textura del globo
-const adjustedLng = lngRad + Math.PI; // o -Math.PI/2, depende del mapa
+  // CORRECCIÓN DE ORIENTACIÓN:
+  // giramos el eje de referencia 90° en longitud para que coincida con la textura del globo
+  const adjustedLng = lngRad + Math.PI; // o -Math.PI/2, depende del mapa
 
-// Cálculo de la posición sobre la esfera
-const x = radius * Math.cos(latRad) * Math.cos(adjustedLng);
-const y = radius * Math.sin(latRad);
-const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
+  // Cálculo de la posición sobre la esfera
+  const x = radius * Math.cos(latRad) * Math.cos(adjustedLng);
+  const y = radius * Math.sin(latRad);
+  const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
 
   // colocaremos la caja **fuera** de la esfera desplazando a lo largo del vector normal
   // en render (useFrame) para no tener problemas de SSR
@@ -59,20 +70,20 @@ const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
     const mesh = meshRef.current;
     if (!mesh) return;
 
-  // calcula la posición exacta en la superficie usando la misma lógica que DebugMarker
-  // añadimos un pequeño offset (radius + 0.02) para que la caja no intersecte la superficie
-  const surfacePos = latLngToVector3(lat, lng, radius + 0.02, calibration ?? {});
+    // calcula la posición exacta en la superficie usando la misma lógica que DebugMarker
+    // añadimos un pequeño offset (radius + 0.02) para que la caja no intersecte la superficie
+    const surfacePos = latLngToVector3(lat, lng, radius + 0.02, calibration ?? {});
 
-  // colocamos el mesh en esa posición
-  mesh.position.copy(surfacePos);
+    // colocamos el mesh en esa posición
+    mesh.position.copy(surfacePos);
 
-  // normal desde el centro hacia el punto en la superficie
-  const dir = surfacePos.clone().normalize();
+    // normal desde el centro hacia el punto en la superficie
+    const dir = surfacePos.clone().normalize();
 
-  // sacamos la caja hacia fuera para que su base quede pegada:
-  // usa depth/2 o un extra fijo según prefieras
-  const extra = depth / 2; // o const extra = 0.05;
-  mesh.position.add(dir.multiplyScalar(extra));
+    // sacamos la caja hacia fuera para que su base quede pegada:
+    // usa depth/2 o un extra fijo según prefieras
+    const extra = depth / 2; // o const extra = 0.05;
+    mesh.position.add(dir.multiplyScalar(extra));
 
     // apuntar hacia el centro
     mesh.lookAt(0, 0, 0);
@@ -95,12 +106,42 @@ const z = radius * Math.cos(latRad) * Math.sin(adjustedLng);
     // meshRef.current.rotation.z += 0.001;
   });
 
+  const emitHoverInfo = useCallback(
+    (fallback?: Vector3) => {
+      if (!onHoverChange) return;
+      const target = meshRef.current?.getWorldPosition(new Vector3()) ?? fallback;
+      if (!target) return;
+      onHoverChange({
+        country,
+        population,
+        position: [target.x, target.y, target.z],
+      });
+    },
+    [country, population, onHoverChange]
+  );
+
   return (
-    <mesh ref={meshRef}>
+    <mesh
+      ref={meshRef}
+      onPointerOver={(event) => {
+        event.stopPropagation();
+        setHovered(true);
+        emitHoverInfo(event.point);
+      }}
+      onPointerMove={(event) => {
+        event.stopPropagation();
+        emitHoverInfo(event.point);
+      }}
+      onPointerOut={(event) => {
+        event.stopPropagation();
+        setHovered(false);
+        onHoverChange?.(null);
+      }}
+    >
       {/* Tamaños X,Y reducidos para que las cajas sean más discretas; Z = depth */}
       <boxGeometry 
       args={[Math.max(0.02, 0.03 * baseScale), Math.max(0.02, 0.03 * baseScale), depth * 0.8]} />
-      <meshBasicMaterial color={color} opacity={0.4} transparent />
+      <meshBasicMaterial color={hovered && hoverColor ? hoverColor : color} opacity={hovered ? 0.7 : 0.4} transparent />
       {/* Añade propiedades para debugging */}
       {/* @ts-ignore */}
       {/* meshRef.current!.userData = { country, population } */}
